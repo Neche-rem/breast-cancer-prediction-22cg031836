@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Breast Cancer Prediction System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: #ffffff;
+            width: 100%;
+            max-width: 800px;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .info-box {
+            background: #f0f4ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-box p {
+            color: #555;
+            line-height: 1.6;
+            margin: 5px 0;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 0.95em;
+        }
+
+        .label-info {
+            font-size: 0.8em;
+            color: #888;
+            font-weight: normal;
+            margin-top: 2px;
+        }
+
+        input[type="number"] {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            font-size: 1.1em;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-predict {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-predict:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-reset {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .btn-reset:hover {
+            background: #e0e0e0;
+        }
+
+        .loading {
+            text-align: center;
+            margin-top: 20px;
+            display: none;
+            color: #667eea;
+            font-size: 1.1em;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            display: none;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-benign {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .result-malignant {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            color: white;
+        }
+
+        .result-title {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .result-details {
+            font-size: 1.1em;
+            margin: 10px 0;
+        }
+
+        .probability-bar {
+            background: rgba(255,255,255,0.3);
+            height: 30px;
+            border-radius: 15px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        .probability-fill {
+            height: 100%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: width 1s ease-out;
+        }
+
+        .disclaimer {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            border-radius: 5px;
+            font-size: 0.9em;
+            color: #856404;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>🔬 Breast Cancer Prediction</h1>
+    <p class="subtitle">AI-Powered Tumor Classification System</p>
+
+    <div class="info-box">
+        <p><strong>📊 About:</strong> This system uses machine learning to predict whether a breast tumor is benign or malignant based on cell nucleus measurements.</p>
+        <p><strong>⚠️ Important:</strong> This is for educational purposes only. Always consult healthcare professionals for medical diagnosis.</p>
+    </div>
+
+    <form id="predictForm">
+        <div class="form-grid">
+            <div class="form-group">
+                <label>
+                    Radius Mean
+                    <span class="label-info">Range: 6-30</span>
+                </label>
+                <input type="number" id="radius_mean" step="0.01" min="0" max="50" required>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    Texture Mean
+                    <span class="label-info">Range: 9-40</span>
+                </label>
+                <input type="number" id="texture_mean" step="0.01" min="0" max="50" required>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    Perimeter Mean
+                    <span class="label-info">Range: 40-200</span>
+                </label>
+                <input type="number" id="perimeter_mean" step="0.01" min="0" max="300" required>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    Area Mean
+                    <span class="label-info">Range: 140-2500</span>
+                </label>
+                <input type="number" id="area_mean" step="0.01" min="0" max="3000" required>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    Smoothness Mean
+                    <span class="label-info">Range: 0.05-0.16</span>
+                </label>
+                <input type="number" id="smoothness_mean" step="0.001" min="0" max="1" required>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    Compactness Mean
+                    <span class="label-info">Range: 0.02-0.35</span>
+                </label>
+                <input type="number" id="compactness_mean" step="0.001" min="0" max="1" required>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    Concavity Mean
+                    <span class="label-info">Range: 0-0.43</span>
+                </label>
+                <input type="number" id="concavity_mean" step="0.001" min="0" max="1" required>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    Concave Points Mean
+                    <span class="label-info">Range: 0-0.20</span>
+                </label>
+                <input type="number" id="concave_points_mean" step="0.001" min="0" max="1" required>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    Symmetry Mean
+                    <span class="label-info">Range: 0.10-0.30</span>
+                </label>
+                <input type="number" id="symmetry_mean" step="0.001" min="0" max="1" required>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    Fractal Dimension Mean
+                    <span class="label-info">Range: 0.05-0.10</span>
+                </label>
+                <input type="number" id="fractal_dimension_mean" step="0.0001" min="0" max="1" required>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button type="submit" class="btn-predict">🔍 Predict Diagnosis</button>
+            <button type="reset" class="btn-reset">🔄 Reset Form</button>
+        </div>
+    </form>
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        Analyzing tumor characteristics...
+    </div>
+
+    <div class="result" id="resultBox">
+        <div class="result-title" id="resultTitle"></div>
+        <div class="result-details" id="resultDetails"></div>
+        <div class="probability-bar">
+            <div class="probability-fill" id="probabilityBar"></div>
+        </div>
+    </div>
+
+    <div class="disclaimer">
+        <strong>⚕️ Medical Disclaimer:</strong> This prediction tool is for educational and research purposes only. 
+        It should NOT be used as a substitute for professional medical advice, diagnosis, or treatment. 
+        Always seek the advice of qualified health providers with any questions regarding medical conditions.
+    </div>
+</div>
+
+<script>
+    // Sample data button functionality
+    function fillSampleBenign() {
+        document.getElementById('radius_mean').value = 12.0;
+        document.getElementById('texture_mean').value = 15.0;
+        document.getElementById('perimeter_mean').value = 80.0;
+        document.getElementById('area_mean').value = 450.0;
+        document.getElementById('smoothness_mean').value = 0.09;
+        document.getElementById('compactness_mean').value = 0.08;
+        document.getElementById('concavity_mean').value = 0.05;
+        document.getElementById('concave_points_mean').value = 0.03;
+        document.getElementById('symmetry_mean').value = 0.17;
+        document.getElementById('fractal_dimension_mean').value = 0.06;
+    }
+
+    function fillSampleMalignant() {
+        document.getElementById('radius_mean').value = 20.0;
+        document.getElementById('texture_mean').value = 25.0;
+        document.getElementById('perimeter_mean').value = 130.0;
+        document.getElementById('area_mean').value = 1200.0;
+        document.getElementById('smoothness_mean').value = 0.12;
+        document.getElementById('compactness_mean').value = 0.25;
+        document.getElementById('concavity_mean').value = 0.30;
+        document.getElementById('concave_points_mean').value = 0.15;
+        document.getElementById('symmetry_mean').value = 0.25;
+        document.getElementById('fractal_dimension_mean').value = 0.08;
+    }
+
+    document.getElementById("predictForm").addEventListener("submit", async function(e) {
+        e.preventDefault();
+
+        const resultBox = document.getElementById("resultBox");
+        const loading = document.getElementById("loading");
+
+        resultBox.style.display = "none";
+        loading.style.display = "block";
+
+        const data = {
+            radius_mean: parseFloat(document.getElementById("radius_mean").value),
+            texture_mean: parseFloat(document.getElementById("texture_mean").value),
+            perimeter_mean: parseFloat(document.getElementById("perimeter_mean").value),
+            area_mean: parseFloat(document.getElementById("area_mean").value),
+            smoothness_mean: parseFloat(document.getElementById("smoothness_mean").value),
+            compactness_mean: parseFloat(document.getElementById("compactness_mean").value),
+            concavity_mean: parseFloat(document.getElementById("concavity_mean").value),
+            concave_points_mean: parseFloat(document.getElementById("concave_points_mean").value),
+            symmetry_mean: parseFloat(document.getElementById("symmetry_mean").value),
+            fractal_dimension_mean: parseFloat(document.getElementById("fractal_dimension_mean").value)
+        };
+
+        try {
+            const response = await fetch("/predict", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            loading.style.display = "none";
+
+            const probabilityBar = document.getElementById("probabilityBar");
+            const probability = result.malignant_probability * 100;
+
+            if (result.diagnosis === 'B') {
+                // Benign result
+                resultBox.className = "result result-benign";
+                document.getElementById("resultTitle").innerText = "✅ BENIGN (Non-Cancerous)";
+                document.getElementById("resultDetails").innerHTML = 
+                    `The tumor is predicted to be <strong>BENIGN</strong><br>
+                    Malignancy Risk: ${probability.toFixed(1)}%`;
+                probabilityBar.style.width = probability + "%";
+                probabilityBar.style.background = "rgba(255,255,255,0.9)";
+                probabilityBar.innerText = `${probability.toFixed(1)}% Risk`;
+            } else {
+                // Malignant result
+                resultBox.className = "result result-malignant";
+                document.getElementById("resultTitle").innerText = "⚠️ MALIGNANT (Cancerous)";
+                document.getElementById("resultDetails").innerHTML = 
+                    `The tumor is predicted to be <strong>MALIGNANT</strong><br>
+                    Malignancy Risk: ${probability.toFixed(1)}%`;
+                probabilityBar.style.width = probability + "%";
+                probabilityBar.style.background = "rgba(255,255,255,0.9)";
+                probabilityBar.innerText = `${probability.toFixed(1)}% Risk`;
+            }
+
+            resultBox.style.display = "block";
+
+        } catch (error) {
+            loading.style.display = "none";
+            resultBox.className = "result result-malignant";
+            document.getElementById("resultTitle").innerText = "❌ Error";
+            document.getElementById("resultDetails").innerText = "Server error. Please try again.";
+            resultBox.style.display = "block";
+            console.error('Error:', error);
+        }
+    });
+
+    // Reset form handler
+    document.getElementById("predictForm").addEventListener("reset", function() {
+        document.getElementById("resultBox").style.display = "none";
+    });
+</script>
+
+</body>
+</html>
